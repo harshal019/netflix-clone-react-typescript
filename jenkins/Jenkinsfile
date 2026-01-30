@@ -56,7 +56,13 @@ pipeline {
             steps {
                 dependencyCheck(
                     odcInstallation: 'DP-Check',
-                    additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit'
+                    additionalArguments: '''
+                    --scan ./app
+                    --out ./security
+                    --format XML
+                    --disableYarnAudit 
+                    --disableNodeAudit
+                '''
                 )
 
                 dependencyCheckPublisher(
