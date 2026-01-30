@@ -39,7 +39,8 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                waitForQualityGate abortPipeline: true
+                waitForQualityGate abortPipeline: true,
+                credentialsId: 'Sonar-token' 
             }
         }
 
@@ -65,15 +66,14 @@ pipeline {
 
         stage('Docker Build & Push') {
             steps {
-                withDockerRegistry(credentialsId: 'dockerhub') {
-                    sh '''
-                    docker build \
-                    --build-arg TMDB_V3_API_KEY=${TMDB_V3_API_KEY} \
-                    -t $DOCKER_IMAGE:latest \
-                    -f docker/Dockerfile .
-                    docker push $DOCKER_IMAGE:latest
-                    '''
+                withCredentials([string(credentialsId: 'tmdb-key', variable: 'TMDB_KEY')
+                ]) {
+                withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker') {
+                    sh "docker build --build-arg TMDB_V3_API_KEY=$TMDB_KEY -t netflix ."
+                    sh "docker tag netflix harshalg01/netflix-ci:latest "
+                    sh "docker push harshalg01/netflix-ci:latest "
                 }
+            }
             }
         }
 
