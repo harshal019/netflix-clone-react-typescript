@@ -66,7 +66,7 @@ pipeline {
                 )
 
                 dependencyCheckPublisher(
-                    pattern: 'security/owasp-dependency-check-report.xml'
+                    pattern: 'security/dependency-check-report.xml'
                 )
             }
 }
