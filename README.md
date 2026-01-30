@@ -1,15 +1,3 @@
-Perfect 👍
-Below is a **FINAL, CLEAN, RECRUITER-FRIENDLY, COPY-PASTE READY `README.md`**.
-
-It:
-
-* ✅ Shows **folder structure**
-* ✅ Shows **step-by-step deployment flow**
-* ✅ Uses **only your scripts / files**
-* ✅ Includes **Prometheus & Grafana automation**
-* ❌ No unnecessary theory
-* ❌ No tutorial noise
-* ✅ Easy for recruiters to **run & verify**
 
 ---
 
