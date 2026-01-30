@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+
+    tools {
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+        DOCKER_IMAGE = "harshalg01/netflix-ci"
+    }
+
+    stages {
+
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/harshal019/netflix-clone-react-typescript.git'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh '''
+                    $SCANNER_HOME/bin/sonar-scanner \
+                    -Dsonar.projectName=Netflix \
+                    -Dsonar.projectKey=Netflix
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                waitForQualityGate abortPipeline: true
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh 'npm install'
+            }
+        }
+
+        stage('OWASP Dependency Scan') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit',
+                odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+
+        stage('Trivy FS Scan') {
+            steps {
+                sh 'trivy fs . > trivyfs.txt'
+            }
+        }
+
+        stage('Docker Build & Push') {
+            steps {
+                withDockerRegistry(credentialsId: 'dockerhub') {
+                    sh '''
+                    docker build \
+                    --build-arg TMDB_V3_API_KEY=${TMDB_V3_API_KEY} \
+                    -t $DOCKER_IMAGE:latest \
+                    -f docker/Dockerfile .
+                    docker push $DOCKER_IMAGE:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh 'trivy image $DOCKER_IMAGE:latest > trivyimage.txt'
+            }
+        }
+    }
+
+    post {
+        always {
+            emailext(
+                subject: "Build ${currentBuild.currentResult}: ${env.JOB_NAME}",
+                body: """
+                <b>Project:</b> ${env.JOB_NAME}<br>
+                <b>Build:</b> ${env.BUILD_NUMBER}<br>
+                <b>Status:</b> ${currentBuild.currentResult}<br>
+                <b>URL:</b> ${env.BUILD_URL}
+                """,
+                to: "randomharshal@gmail.com",
+                attachmentsPattern: "trivyfs.txt,trivyimage.txt"
+            )
+        }
+    }
+}
