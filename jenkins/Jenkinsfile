@@ -82,7 +82,7 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'tmdb-key', variable: 'TMDB_KEY')
                 ]) {
-                withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker') {
+                withDockerRegistry(credentialsId: 'dockerhub') {
                     sh "docker build --build-arg TMDB_V3_API_KEY=$TMDB_KEY -t netflix ."
                     sh "docker tag netflix harshalg01/netflix-ci:latest "
                     sh "docker push harshalg01/netflix-ci:latest "
